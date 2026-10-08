@@ -1,0 +1,44 @@
+{
+    "groups": {
+        "g1": {
+            "id": "g1",
+            "name": "Pokemon"
+        }
+    },
+    "lists": {
+        "g1": {
+            "Default": {
+                "d1": {
+                    "id": "d1",
+                    "status": "Idle",
+                    "startScheduleTime": 1791489288000
+                },
+                "d2": {
+                    "id": "d2",
+                    "status": "Idle",
+                    "startScheduleTime": 1791489288000
+                },
+                "d3": {
+                    "id": "d3",
+                    "status": "Idle",
+                    "startScheduleTime": 1791489288000
+                }
+            },
+            "Restock": {
+                "r1": {
+                    "id": "r1",
+                    "status": "Idle",
+                    "startScheduleTime": 1791489288000
+                },
+                "r2": {
+                    "id": "r2",
+                    "status": "Idle",
+                    "startScheduleTime": 1791489288000
+                }
+            }
+        },
+        "g2": {
+            "Default": {}
+        }
+    }
+}

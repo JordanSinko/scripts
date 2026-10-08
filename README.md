@@ -22,7 +22,7 @@ npx caches by commit. Run with `--yes` to skip the install prompt. If the repo i
 
 | Command | Description |
 | --- | --- |
-| `valor-stagger-start` | Placeholder, not implemented yet |
+| `valor-stagger-start` | Stagger `startScheduleTime` across selected Valor task lists (`--dry-run` to preview) |
 
 ## Adding a command
 
