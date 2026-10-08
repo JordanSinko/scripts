@@ -1,0 +1,21 @@
+{
+  "name": "scripts",
+  "version": "0.1.0",
+  "description": "Personal CLI scripts, run straight from GitHub with npx",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "scripts": "bin/scripts.js",
+    "valor-stagger-start": "bin/valor-stagger-start.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node tools/check.js"
+  }
+}
