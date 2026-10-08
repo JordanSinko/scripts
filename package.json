@@ -16,6 +16,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "node tools/check.js"
+    "check": "node tools/check.js",
+    "test": "node --test"
   }
 }
