@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -97,4 +97,15 @@ test('missing file reports path and --file hint', () => {
   const r = run(['--file', join(dir, 'nope.json')], '');
   assert.equal(r.status, 1);
   assert.match(r.stderr, /Cannot read .*nope\.json.*--file/);
+});
+
+test('file without a lists object names the file', () => {
+  const { dir } = setup();
+  const file = join(dir, 'empty.json');
+  writeFileSync(file, '{}');
+  const r = run(['--file', file], '');
+  assert.equal(r.status, 1);
+  assert.ok(r.stderr.includes(file), r.stderr);
+  assert.ok(r.stderr.includes('no "lists" object'), r.stderr);
+  assert.equal(readFileSync(file, 'utf8'), '{}');
 });

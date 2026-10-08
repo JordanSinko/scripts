@@ -57,7 +57,7 @@ function printPreview(changes, selected, startMs) {
     const day = dateOf(d) === startDate ? '' : `${dateOf(d)} `;
     return `  #${index + 1}  ${list.label}  ${day}${clockOf(d)}`;
   };
-  console.log(`\n${changes.length} tasks across ${selected.length} list${selected.length === 1 ? '' : 's'}:`);
+  console.log(`\n${changes.length} task${changes.length === 1 ? '' : 's'} across ${selected.length} list${selected.length === 1 ? '' : 's'}:`);
   if (changes.length <= 6) {
     changes.forEach((c, i) => console.log(line(c, i)));
   } else {
@@ -87,7 +87,12 @@ export async function run(argv) {
   const { text, data } = await loadTasks(filePath);
   console.log(`Using ${filePath}`);
 
-  const lists = collectLists(data);
+  let lists;
+  try {
+    lists = collectLists(data);
+  } catch (err) {
+    throw new Error(`${filePath} has no "lists" object`);
+  }
   if (lists.length === 0) {
     console.log('No task lists found. Nothing to do.');
     return 0;
