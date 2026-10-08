@@ -33,6 +33,7 @@ export function createPrompter({ input = process.stdin, output = process.stdout 
     }
   });
   rl.on('close', end);
+  // With terminal: false a real Ctrl-C is a process signal (default kill); this only fires if something emits 'SIGINT' on the interface.
   rl.on('SIGINT', () => {
     lines.length = 0;
     end();

@@ -23,6 +23,7 @@ Options:
   --dry-run      Print what would happen without doing it
   -h, --help     Show this help`;
 
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const pad = (n, width = 2) => String(n).padStart(width, '0');
 const dateOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const clockOf = (d) =>
@@ -45,25 +46,29 @@ async function loadTasks(filePath) {
 function printMenu(lists) {
   const width = Math.max(...lists.map((l) => l.label.length));
   lists.forEach((l, i) => {
-    const n = l.taskIds.length;
-    console.log(`  ${i + 1}) ${l.label.padEnd(width)}   (${n} task${n === 1 ? '' : 's'})`);
+    console.log(`  ${i + 1}) ${l.label.padEnd(width)}   (${plural(l.taskIds.length, 'task')})`);
   });
 }
 
-function printPreview(changes, selected, startMs) {
+function printPreview(changes, selected, startMs, reformats) {
   const startDate = dateOf(new Date(startMs));
   const line = ({ list, time }, index) => {
     const d = new Date(time);
     const day = dateOf(d) === startDate ? '' : `${dateOf(d)} `;
     return `  #${index + 1}  ${list.label}  ${day}${clockOf(d)}`;
   };
-  console.log(`\n${changes.length} task${changes.length === 1 ? '' : 's'} across ${selected.length} list${selected.length === 1 ? '' : 's'}:`);
+  console.log(`\n${plural(changes.length, 'task')} across ${plural(selected.length, 'list')}:`);
   if (changes.length <= 6) {
     changes.forEach((c, i) => console.log(line(c, i)));
   } else {
     for (let i = 0; i < 3; i++) console.log(line(changes[i], i));
     console.log('  ...');
     for (let i = changes.length - 3; i < changes.length; i++) console.log(line(changes[i], i));
+  }
+  if (reformats) {
+    console.log(
+      '⚠ Saving will reformat this file (key order, number formatting or line endings may change); a backup is kept.',
+    );
   }
   if (startMs < Date.now()) console.log('⚠ Start time is in the past.');
 }
@@ -116,8 +121,12 @@ export async function run(argv) {
     );
     const intervalMs = await prompter.ask('Interval between tasks (ms):', parseInterval);
 
+    const reformats = serializeLike(text, data) !== text;
     const changes = applyStagger(data, selected, startMs, intervalMs);
-    printPreview(changes, selected, startMs);
+    if (!(changes.at(-1).time <= 8.64e15)) {
+      throw new Error('Start time plus interval runs past the largest valid date; use a smaller interval.');
+    }
+    printPreview(changes, selected, startMs, reformats);
 
     if (values['dry-run']) {
       console.log('Dry run: no changes written.');
@@ -132,7 +141,7 @@ export async function run(argv) {
 
     const backupPath = await backupAndWrite(filePath, serializeLike(text, data));
     console.log(`Backup: ${backupPath}`);
-    console.log(`Updated ${changes.length} tasks.`);
+    console.log(`Updated ${plural(changes.length, 'task')}.`);
     return 0;
   } catch (err) {
     if (err instanceof CancelledError) {

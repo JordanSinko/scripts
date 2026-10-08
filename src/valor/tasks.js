@@ -4,12 +4,16 @@ export function collectLists(data) {
   if (!isPlainObject(data?.lists)) throw new Error('tasks.json has no "lists" object');
   const out = [];
   for (const [groupId, modes] of Object.entries(data.lists)) {
-    for (const [mode, tasks] of Object.entries(modes ?? {})) {
+    if (!isPlainObject(modes)) continue;
+    for (const [mode, tasks] of Object.entries(modes)) {
+      if (!isPlainObject(tasks)) continue;
       out.push({
         groupId,
         mode,
         label: `${data.groups?.[groupId]?.name ?? groupId} / ${mode}`,
-        taskIds: Object.keys(tasks ?? {}),
+        taskIds: Object.entries(tasks)
+          .filter(([, task]) => isPlainObject(task))
+          .map(([id]) => id),
       });
     }
   }
@@ -22,7 +26,7 @@ export function parseSelection(input, count) {
   const picked = [];
   for (const raw of text.split(',')) {
     const part = raw.trim();
-    const m = /^(\d+)(?:-(\d+))?$/.exec(part);
+    const m = /^(\d+)(?:\s*-\s*(\d+))?$/.exec(part);
     const a = m && Number(m[1]);
     const b = m && (m[2] === undefined ? a : Number(m[2]));
     if (!m || a < 1 || a > b || b > count) {
@@ -57,7 +61,9 @@ export function parseLocalDateTime(input) {
 export function parseInterval(input) {
   const text = input.trim();
   if (!/^\d+$/.test(text)) throw new Error('Enter a whole number of milliseconds (0 or more)');
-  return Number(text);
+  const value = Number(text);
+  if (!Number.isSafeInteger(value)) throw new Error('Enter a whole number of milliseconds (0 or more)');
+  return value;
 }
 
 export function applyStagger(data, lists, startMs, intervalMs) {
@@ -74,7 +80,7 @@ export function applyStagger(data, lists, startMs, intervalMs) {
 }
 
 export function parseTasksJson(text) {
-  return JSON.parse(text.replace(/^﻿/, ''));
+  return JSON.parse(text.replace(/^\uFEFF/, ''));
 }
 
 export function detectIndent(text) {
@@ -84,7 +90,7 @@ export function detectIndent(text) {
 }
 
 export function serializeLike(originalText, data) {
-  const bom = originalText.startsWith('﻿') ? '﻿' : '';
+  const bom = originalText.startsWith('\uFEFF') ? '\uFEFF' : '';
   const newline = /\n$/.test(originalText) ? '\n' : '';
   return bom + JSON.stringify(data, null, detectIndent(originalText)) + newline;
 }

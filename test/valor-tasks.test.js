@@ -29,6 +29,7 @@ test('parseSelection', () => {
   assert.deepEqual(parseSelection('2,1', 3), [1, 0]);
   assert.deepEqual(parseSelection(' 2 , 1 ', 3), [1, 0]);
   assert.deepEqual(parseSelection('1-3', 3), [0, 1, 2]);
+  assert.deepEqual(parseSelection('1 - 3', 3), [0, 1, 2]);
   assert.deepEqual(parseSelection('3,1-2', 3), [2, 0, 1]);
   assert.deepEqual(parseSelection('ALL', 3), [0, 1, 2]);
   assert.deepEqual(parseSelection('1,1,2', 3), [0, 1]);
@@ -47,7 +48,7 @@ test('parseLocalDateTime', () => {
 test('parseInterval', () => {
   assert.equal(parseInterval('250'), 250);
   assert.equal(parseInterval(' 0 '), 0);
-  for (const bad of ['', '-1', '1.5', '1e3', '250ms']) assert.throws(() => parseInterval(bad), Error, bad);
+  for (const bad of ['', '-1', '1.5', '1e3', '250ms', '99999999999999999999']) assert.throws(() => parseInterval(bad), Error, bad);
 });
 
 test('collectLists labels and order, missing-group fallback', () => {
@@ -79,9 +80,19 @@ test('detectIndent', () => {
 });
 
 test('serializeLike preserves BOM and trailing newline', () => {
-  const original = '﻿{\n    "a": 1\n}\n';
+  const original = '\uFEFF{\n    "a": 1\n}\n';
   const data = parseTasksJson(original);
   data.a = 2;
-  assert.equal(serializeLike(original, data), '﻿{\n    "a": 2\n}\n');
+  assert.equal(serializeLike(original, data), '\uFEFF{\n    "a": 2\n}\n');
   assert.equal(serializeLike('{"a":1}', { a: 2 }), '{"a":2}');
+});
+
+test('collectLists skips malformed groups, modes and tasks', () => {
+  const data = {
+    lists: {
+      str: 'oops',
+      g: { Bad: 'text', Nul: null, Arr: [1, 2], Ok: { a: {}, b: null, c: 5, d: { x: 1 } } },
+    },
+  };
+  assert.deepEqual(collectLists(data), [{ groupId: 'g', mode: 'Ok', label: 'g / Ok', taskIds: ['a', 'd'] }]);
 });

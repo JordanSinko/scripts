@@ -62,6 +62,7 @@ test('--dry-run writes nothing', () => {
   const r = run(['--file', file, '--dry-run'], '1\n2030-01-15 10:00\n250\n');
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /Dry run: no changes written\./);
+  assert.doesNotMatch(r.stdout, /Saving will reformat/);
   assert.equal(readFileSync(file, 'utf8'), fixtureText);
   assert.deepEqual(backups(dir), []);
 });
@@ -108,4 +109,22 @@ test('file without a lists object names the file', () => {
   assert.ok(r.stderr.includes(file), r.stderr);
   assert.ok(r.stderr.includes('no "lists" object'), r.stderr);
   assert.equal(readFileSync(file, 'utf8'), '{}');
+});
+
+test('interval overflowing the valid date range is rejected before writing', () => {
+  const { dir, file } = setup();
+  const r = run(['--file', file], '1,2\n2030-01-15 10:00\n9000000000000000\n');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /largest valid date; use a smaller interval/);
+  assert.equal(readFileSync(file, 'utf8'), fixtureText);
+  assert.deepEqual(backups(dir), []);
+});
+
+test('warns when saving would reformat the file', () => {
+  const { dir } = setup();
+  const file = join(dir, 'crlf.json');
+  writeFileSync(file, fixtureText.replace(/\n/g, '\r\n'));
+  const r = run(['--file', file, '--dry-run'], '1\n2030-01-15 10:00\n250\n');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /⚠ Saving will reformat this file \(key order, number formatting or line endings may change\); a backup is kept\./);
 });
